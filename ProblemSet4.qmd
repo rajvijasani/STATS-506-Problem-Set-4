@@ -1,0 +1,74 @@
+---
+title: "Problem Set 4"
+author: "Rajvi Jasani"
+format: 
+  html:
+    toc: true
+    embed-resources: true
+  pdf: default
+---
+
+## GitHub Repository
+
+This is the link to my GitHub repository <https://github.com/rajvijasani/STATS506-Problem-Set-4.git>
+
+## Problem 1 - Tidyverse
+*Documentation reference:* <https://cran.r-project.org/web/packages/nycflights13/nycflights13.pdf>
+```{r}
+#| message: false
+library(tidyverse)
+library(nycflights13)
+```
+a.
+
+Departure
+```{r}
+flights %>%
+  group_by(origin) %>%
+  summarise(mean_delay = round(mean(dep_delay, na.rm = TRUE), 3),
+            median_delay = median(dep_delay, na.rm = TRUE)) %>%
+  ungroup() %>%
+  left_join(airports, by = c("origin" = "faa")) %>%
+  select(name, mean_delay, median_delay) %>%
+  arrange(desc(mean_delay))
+```
+Arrival
+```{r}
+flights %>%
+  group_by(dest) %>%
+  summarise(
+    mean_delay = round(mean(arr_delay, na.rm = TRUE), 3),
+    median_delay = median(arr_delay, na.rm = TRUE),
+    num_flights = n()
+  ) %>%
+  ungroup() %>%
+  filter(num_flights >= 10) %>%
+  left_join(airports, by = c("dest" = "faa")) %>%
+  # to rename airport name with
+  # faa code where name is NA
+  mutate(name = if_else(is.na(name), dest, name)) %>%
+  select(name, mean_delay, median_delay) %>%
+  arrange(desc(mean_delay)) %>%
+  print(n = count(.))
+```
+*Attribution of source:* Used ChatGPT for help with join and renaming airports with faa codes that have NA values in names.
+
+b.
+
+There is a speed column in the planes table, but the values haven't been populated so we calculate speed on our own.
+```{r}
+flights %>%
+  left_join(planes, by = "tailnum") %>%
+  mutate(time = air_time / 60, # converting from minutes to hours
+         flight_speed = distance / time) %>%
+  group_by(model) %>% # different tail number planes can be of same model
+  summarise(avg_speed = mean(flight_speed, na.rm = TRUE),
+            num_flights = n()) %>%
+  filter(avg_speed == max(avg_speed, na.rm = TRUE))
+```
+
+## Problem 2 - `get_temp()`
+```{r}
+
+```
+
