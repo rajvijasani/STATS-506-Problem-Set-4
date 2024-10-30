@@ -69,6 +69,101 @@ flights %>%
 
 ## Problem 2 - `get_temp()`
 ```{r}
-
+nnmaps <- read.csv("data/chicago-nmmaps.csv")
+#' Function to get average temperature based on user's query
+#'
+#' @param month Month, either a numeric 1-12 or a string
+#' @param year A numeric year
+#' @param data The data set to obtain data from
+#' @param celsius Logically indicating whether the results should be in celsius. Default FALSE
+#' @param average_fn A function to compute the average. Default mean
+#'
+#' @return average temperature for a given month
+get_temp <- function(month, year, data, celsius = FALSE, average_fn = mean) {
+  # sanitizing month input
+  if (month %>% is.numeric()) {
+    if (month < 1 || month > 12) {
+      stop("Month should be between 1 and 12")
+    }
+  }
+  else if (month %>% is.character()) {
+    # taking into consideration month abbreviations (index 1-12)
+    # and full names (index 13-24)
+    all_months <- c(month.abb, month.name) %>% tolower()
+    # getting index of match if exists
+    month <- match(tolower(month), all_months)
+    if (month %>% is.na()) {
+      stop("Invalid month string")
+    }
+    else if (month > 12) {
+      # converting month index for full name from 13-24 to 1-12
+      month <- month %>% `-` (12)
+    }
+  }
+  else {
+    stop("Month should be numeric or string only")
+  }
+  
+  # sanitizing year input
+  if (!year %>% is.numeric()) {
+    stop("Year must be numeric")
+  }
+  if (year < min(data$year) || year > max(data$year)) {
+    stop("Year not in range")
+  }
+  
+  # querying
+  result <- data %>%
+    select(year, month_numeric, temp) %>%
+    rename(year_data = year) %>%
+    filter(year_data == year, month_numeric == month) %>%
+    summarise(avg_temp = average_fn(temp)) %>%
+    mutate(avg_temp = ifelse(celsius, (avg_temp - 32) * 5 / 9, avg_temp)) %>%
+    as.numeric()
+  
+  return(result)
+}
 ```
-
+*Attribution of source:* Asked ChatGPT for possible methods to sanitize month input when month is as string that can be a full name or an abbreviation.
+```{r}
+tryCatch({
+  print(get_temp("Apr", 1999, data = nnmaps))
+}, error = function(e) {
+  message("Error: ", e$message)
+})
+tryCatch({
+  print(get_temp("Apr", 1999, data = nnmaps, celsius = TRUE))
+}, error = function(e) {
+  message("Error: ", e$message)
+})
+tryCatch({
+  print(get_temp(10, 1998, data = nnmaps, average_fn = median))
+}, error = function(e) {
+  message("Error: ", e$message)
+})
+tryCatch({
+  print(get_temp(13, 1998, data = nnmaps))
+}, error = function(e) {
+  message("Error: ", e$message)
+})
+tryCatch({
+  print(get_temp(2, 2005, data = nnmaps))
+}, error = function(e) {
+  message("Error: ", e$message)
+})
+tryCatch({
+  print(get_temp(
+    "November",
+    1999,
+    data = nnmaps,
+    celsius = TRUE,
+    average_fn = function(x) {
+      x %>% sort -> x
+      x[2:(length(x) - 1)] %>% mean %>% return
+    }
+  ))
+}, error = function(e) {
+  message("Error: ", e$message)
+})
+```
+*Attribution of source:* Asked ChatGPT for possible solution when quarto document was not rendering due to error when function is given wrong input. ChatGPT suggested using try-catch blocks to handle errors.
