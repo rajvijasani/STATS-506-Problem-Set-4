@@ -2,7 +2,7 @@
 title: "Problem Set 4"
 author: "Rajvi Jasani"
 format: 
-  html:
+  html: 
     toc: true
     embed-resources: true
   pdf: default
@@ -167,3 +167,64 @@ tryCatch({
 })
 ```
 *Attribution of source:* Asked ChatGPT for possible solution when quarto document was not rendering due to error when function is given wrong input. ChatGPT suggested using try-catch blocks to handle errors.
+
+## Problem 3 - Visualization
+```{r}
+library(ggplot2)
+library(dplyr)
+df <- read.csv("data/df_for_ml_improved_new_market.csv")
+```
+a.
+```{r}
+df_avg_price <- df %>%
+  group_by(year) %>%
+  summarise(avg_usd_year = mean(price_usd, na.rm = TRUE)) %>%
+  ungroup() %>%
+  select(year, avg_usd_year)
+
+print(ggplot(df_avg_price, aes(x = year, y = avg_usd_year)) +
+  geom_line(color = "blue") +
+  labs(title = "Average Sales Price in USD Over Time", x = "Year", y = "Average Price (USD)") +
+  theme(plot.title = element_text(hjust = 0.5)))
+```
+The line plot is the simplest and most informative graph to look at a trend. Looking at the graph here, we see that there is an overall increase in average sales price over the years until 2008 after which we can notice an overall decline. The increase and decrease in the prices is not constant and varies over period of years.
+
+*Attribution of source:* Used ChatGPT to find functions to make the graph look good such a theme().
+
+b.
+```{r}
+df_long <- df %>%
+  pivot_longer(cols = starts_with("Genre"),
+               names_to = "Genre",
+               values_to = "Presence") %>%
+  filter(Presence == 1)
+
+df_genre_distribution <- df_long %>%
+  count(year, Genre)
+
+print(ggplot(df_genre_distribution, aes(x = factor(year), y = n, fill = Genre)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Genre Distribution Over Years", x = "Year", y = "Count") +
+  theme(plot.title = element_text(hjust = 0.5)))
+```
+
+A stacked bar plot with different genres colored differently can help easily spot the trend. It is quite clear from this graph that the distribution of genre of sales changes over the years but differs from genre to genre. At the beginning, the sales for each genre were quite low. With time, we see there is an increase in sales of sculptures and photographs. However, they both seem to have a steady amount of sales in the last half, between the years 2005-2010. The other genres also have increase in sales but the count isn't as major as photography and sculptures. One interesting observation I noticed was that the sales of paintings genre looks almost equal to other genre. This could be due to various reasons and should be investigated further.
+
+*Attribution of source:* Asked ChatGPT how to combine the different genre columns into 1 column (opposite of factoring). Looked at ggplot2 documentation <https://ggplot2.tidyverse.org/reference/> for available geom functions.
+
+c.
+```{r}
+df_genre_price <- df_long %>%
+  group_by(year, Genre) %>%
+  summarise(avg_price = mean(price_usd, na.rm = TRUE)) %>%
+  ungroup() %>%
+  select(year, avg_price, Genre)
+
+print(ggplot(df_genre_price, aes(x = year, y = avg_price, color = Genre)) +
+  geom_line(linewidth = 1) +
+  labs(title = "Impact of Genre on Sales Price Over Years", x = "Year", y = "Average Price (USD)")  +
+  theme(plot.title = element_text(hjust = 0.5)))
+```
+These plots show the demand of each genre through their sale prices over years. We can identify that some genres are more susceptible to market trends/popularities, like Photography and Print, while others are more stable. When there is an increase in demand of a particular genre, like Photography peaking in 2008, the total sale prices also increased dramatically, which can be verified from the graph in part a. Similarly, the rise and falls seen in graph in part a can be justified and understood by looking at these plots. We can also verify that the sales of paintings genre looks almost equal to other genre as their line plots are overlapping for up till a point.
+
+*Attribution of source:* Looked at ggplot2 documentation <https://ggplot2.tidyverse.org/reference/> for available geom functions.
